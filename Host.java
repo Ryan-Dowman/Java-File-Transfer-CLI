@@ -8,6 +8,10 @@ public class Host implements Runnable {
     ServerSocket server;
     ClientHandler clientHandler;
 
+    public Host() {
+        startHosting();
+    }
+
     @Override
     public void run() {
         awaitClientConnection();
@@ -25,5 +29,9 @@ public class Host implements Runnable {
         } catch (IOException e){
             e.printStackTrace();
         }
+    }
+
+    private void startHosting() {
+        new Thread(this).start();
     }
 }

@@ -52,7 +52,7 @@ public class ClientHandler implements Runnable{
                     System.out.println("Fetching client directory data...");
                     
                     // Host must start listening for the corresponsing chain of inputs from client to compile the information they want
-                    sendObject();
+                    System.out.println("Recieved: " + objectIn.readUTF());
                 }
 
                 else if(request.type == RequestType.FILE){
