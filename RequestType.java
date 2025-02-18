@@ -1,0 +1,4 @@
+enum RequestType {
+    OBJECT,
+    FILE
+}
