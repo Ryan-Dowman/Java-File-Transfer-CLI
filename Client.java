@@ -11,7 +11,8 @@ import java.util.Queue;
 import javax.swing.filechooser.FileSystemView;
 
 public class Client implements Runnable{
-    Socket socket;
+    Socket objectSocket;
+    Socket fileSocket;
 
     DataOutputStream fileOut;
     DataInputStream fileIn;
