@@ -6,7 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ClientHandler implements Runnable{
-    Socket socket;
+    Socket objectSocket;
+    Socket fileSocket;
 
     DataOutputStream fileOut;
     DataInputStream fileIn;
