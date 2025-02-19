@@ -7,6 +7,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.List;
+import java.util.Queue;
 import javax.swing.filechooser.FileSystemView;
 
 public class Client implements Runnable{
@@ -22,6 +23,8 @@ public class Client implements Runnable{
 
     List<String> currentDirectories;
     List<String> currentFiles;
+
+    Queue<String> downloadQueue;
 
     public Client(Socket socket) {
         this.socket = socket;
@@ -109,6 +112,9 @@ public class Client implements Runnable{
     }
 
     void requestFileFromPath(String path) {
+        
+        downloadQueue.add(path);
+        
         try {
             fileStreamInProgress = true;
             Request request = new Request(RequestType.FILE);
