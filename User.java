@@ -4,6 +4,7 @@
  */
 
 
-class User {
+abstract class User {
 
+    abstract void ShutDown();
 }

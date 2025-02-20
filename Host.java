@@ -48,7 +48,11 @@ public class Host extends User {
                     dataIn = new DataInputStream(clientDataSocket.getInputStream());
 
                     System.out.println("Client data socket connected!");
-                    if(clientObjectSocket != null) sendIntialDirectories();
+
+                    //Runnable handleIncomingData = this::handleIncomingData;
+                    //new Thread(handleIncomingData).start();
+
+                    if(objectOut != null) sendIntialDirectories();
                 }else{
                     System.out.println("Client attempted to connect but was rejected as another client has already been established");
                     clientDataConnection.close();
@@ -56,6 +60,12 @@ public class Host extends User {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    private void handleIncomingData(){
+        while (true) { 
+            System.out.println("Incoming Data Received");
         }
     }
 
@@ -70,11 +80,29 @@ public class Host extends User {
                     objectIn = new ObjectInputStream(clientObjectSocket.getInputStream());
 
                     System.out.println("Client object socket connected!");
-                    if(clientDataSocket != null) sendIntialDirectories();
+
+                    Runnable handleIncomingObject = this::handleIncomingObject;
+                    new Thread(handleIncomingObject).start();
+
+                    if(dataOut != null) sendIntialDirectories();
                 }else{
                     System.out.println("Client attempted to connect but was rejected as another client has already been established");
                     clientObjectConnection.close();
                 }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void handleIncomingObject(){
+        System.out.println("Listening for incoming objects...");
+        while(true) { 
+            try {
+                String path = objectIn.readUTF();
+                System.out.println("Incoming Object Received: " + path);
+
+                sendObject(path);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -93,6 +121,7 @@ public class Host extends User {
 
             objectOut.writeObject(filesAndDirectories);
             objectOut.flush();
+            System.out.println("Sent for: " + path);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -116,5 +145,10 @@ public class Host extends User {
         FilesAndDirectories filesAndDirectories = new FilesAndDirectories(filePaths, directoryPaths);
 
         return filesAndDirectories;
+    }
+
+    @Override
+    void ShutDown() {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 }

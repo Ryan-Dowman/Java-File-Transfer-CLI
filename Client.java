@@ -1,8 +1,10 @@
 
 import java.io.*;
 import java.net.Socket;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 
 
@@ -16,6 +18,9 @@ public class Client extends User{
 
     ObjectInputStream objectIn;
     ObjectOutputStream objectOut;
+
+    Map<String, String> currentDirectoryPathsMap = new HashMap<>();
+    Map<String, String> currentFilePathsMap = new HashMap<>();
 
     Queue<String> fileDownloadPaths = new LinkedList<>();
 
@@ -92,26 +97,73 @@ public class Client extends User{
     }
 
     private void listenForObjects() {
-        System.out.println("Waiting for objects...");
+        while(true) { 
             try {
                 FilesAndDirectories filesAndDirectories = (FilesAndDirectories) objectIn.readObject();
-
+    
                 List<String> filePaths = filesAndDirectories.files;
                 List<String> directoryPaths = filesAndDirectories.directories;
+    
+                // We will use these to help navigate based on short hand versions of paths
+                PopulateShortHandPathMap(filePaths, currentFilePathsMap);
+                PopulateShortHandPathMap(directoryPaths, currentDirectoryPathsMap);
 
-                for(String filePath : filePaths){
+                for(String filePath : currentFilePathsMap.keySet()){
                     System.out.println(filePath);
                 }
-
-                for(String directoryPath : directoryPaths){
+    
+                for(String directoryPath : currentDirectoryPathsMap.keySet()){
                     System.out.println(directoryPath);
                 }
+
+                System.out.print("> ");
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
-            }
+            }    
+        }
     }
 
-    private void sendObject() {
-        
+    public void sendObject(String path) {
+        try {
+
+            String fullPath = null;
+
+            if(path.equals("..")){
+                String firstPath = currentDirectoryPathsMap.values().stream().findFirst().orElse(null);
+                
+                if(firstPath != null){
+                    int lastSlashIndex = firstPath.lastIndexOf("\\") == -1 ? 0 : firstPath.lastIndexOf("\\");
+                    int secondLastSlashIndex = firstPath.lastIndexOf("\\", lastSlashIndex) == -1 ? 0 : firstPath.lastIndexOf("\\");
+                    fullPath = slashIndex != firstPath.length() - 1 ? firstPath.substring(0, slashIndex) : "";
+                }
+            }else{
+                fullPath = path.equals("") ? "" : currentDirectoryPathsMap.get(path);
+            }
+
+            if(fullPath == null) {
+                System.out.println("Invalid Path!");
+                return;
+            }
+            System.out.println("Sending: " + fullPath);
+            objectOut.writeUTF(fullPath.trim());
+            objectOut.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }    
+
+    @Override
+    void ShutDown() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    private void PopulateShortHandPathMap(List<String> paths, Map<String, String> pathsMap) {
+        pathsMap.clear();
+        
+        for(String path : paths){
+            int slashIndex = path.lastIndexOf("\\") == -1 ? 0 : path.lastIndexOf("\\") + 1;
+            String shortHandPath = slashIndex < path.length() - 1 ? path.substring(slashIndex, path.length()) : path;
+            pathsMap.put(shortHandPath, path);
+        }
+    }
 }
