@@ -4,7 +4,8 @@ import java.util.Scanner;
 
 public class Program {
     
-    public static int TARGET_PORT = 5000;
+    public static int DATA_TARGET_PORT = 5000;
+    public static int OBJECT_TARGET_PORT = 5001;
 	public static final int BUFFER_SIZE = 32 * 1024; //32KB 
 
     private static User user;
@@ -25,7 +26,7 @@ public class Program {
 
     private static void intialiseUserAsHost() {
         try {
-            user = new Host(new ServerSocket(TARGET_PORT));
+            user = new Host(new ServerSocket(DATA_TARGET_PORT), new ServerSocket(OBJECT_TARGET_PORT));
         } catch (IOException e) {
             e.printStackTrace();
         }

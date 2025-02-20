@@ -26,19 +26,20 @@ public class Client extends User{
     private void createSocketConnections() {
         try {
             // Data socket is expected first so must be created first
-            dataSocket = new Socket("localhost", Program.TARGET_PORT);
-            objectSocket = new Socket("localhost", Program.TARGET_PORT);
+            dataSocket = new Socket("localhost", Program.DATA_TARGET_PORT);
+            objectSocket = new Socket("localhost", Program.OBJECT_TARGET_PORT);
 
-            dataIn = new DataInputStream(dataSocket.getInputStream());
             dataOut = new DataOutputStream(dataSocket.getOutputStream());
+            dataIn = new DataInputStream(dataSocket.getInputStream());
 
-            objectIn = new ObjectInputStream(dataSocket.getInputStream());
-            objectOut = new ObjectOutputStream(dataSocket.getOutputStream());
+            objectOut = new ObjectOutputStream(objectSocket.getOutputStream());
+            objectOut.flush();
+            objectIn = new ObjectInputStream(objectSocket.getInputStream());
 
             System.out.println("Client sockets sucessfully established");
             
-            Runnable listenForData = () -> listenForData();
-            Runnable listenForObjects = () -> listenForObjects();
+            Runnable listenForData = this::listenForData;
+            Runnable listenForObjects = this::listenForObjects;
 
             // Place each socket listening on different threads to ensure that the processes do not halt one another
             new Thread(listenForData).start();
@@ -50,6 +51,7 @@ public class Client extends User{
     }
 
     private void listenForData() {
+        System.out.println("Waiting for data...");
         while(true){
             try {
             
@@ -92,7 +94,7 @@ public class Client extends User{
     }
 
     private void listenForObjects() {
-        while(true){
+        System.out.println("Waiting for objects...");
             try {
                 FilesAndDirectories filesAndDirectories = (FilesAndDirectories) objectIn.readObject();
 
@@ -109,7 +111,6 @@ public class Client extends User{
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
             }
-        }
     }
 
     private void sendObject() {
