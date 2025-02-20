@@ -132,9 +132,9 @@ public class Client extends User{
                 String firstPath = currentDirectoryPathsMap.values().stream().findFirst().orElse(null);
                 
                 if(firstPath != null){
-                    int lastSlashIndex = firstPath.lastIndexOf("\\") == -1 ? 0 : firstPath.lastIndexOf("\\");
-                    int secondLastSlashIndex = firstPath.lastIndexOf("\\", lastSlashIndex) == -1 ? 0 : firstPath.lastIndexOf("\\");
+                    int slashIndex = firstPath.lastIndexOf("\\") == -1 ? 0 : firstPath.lastIndexOf("\\");
                     fullPath = slashIndex != firstPath.length() - 1 ? firstPath.substring(0, slashIndex) : "";
+                    fullPath = fullPath.equals("") ? "" : fullPath.substring(0, fullPath.lastIndexOf("\\") == -1 ? fullPath.length() : fullPath.lastIndexOf("\\"));
                 }
             }else{
                 fullPath = path.equals("") ? "" : currentDirectoryPathsMap.get(path);
