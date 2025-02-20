@@ -62,12 +62,12 @@ public class Host extends User {
     private void listenForClientObjectConnections(){
         while (true) { 
             try {
-                Socket clientObjectConnection = dataServer.accept();
+                Socket clientObjectConnection = objectServer.accept();
                 if(clientObjectSocket == null){
                     clientObjectSocket = clientObjectConnection;
 
-                    dataOut = new DataOutputStream(clientObjectSocket.getOutputStream());
-                    dataIn = new DataInputStream(clientObjectSocket.getInputStream());
+                    objectOut = new ObjectOutputStream(clientObjectSocket.getOutputStream());
+                    objectIn = new ObjectInputStream(clientObjectSocket.getInputStream());
 
                     System.out.println("Client object socket connected!");
                     if(clientDataSocket != null) sendIntialDirectories();
@@ -99,7 +99,7 @@ public class Host extends User {
     }
 
     private void sendIntialDirectories(){
-        System.out.println("Client sockets sucessfully connected!");
+        System.out.println("Client sucessfully connected!");
         sendObject("");
     }
 

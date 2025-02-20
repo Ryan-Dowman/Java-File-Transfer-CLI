@@ -27,13 +27,11 @@ public class Client extends User{
         try {
             // Data socket is expected first so must be created first
             dataSocket = new Socket("localhost", Program.DATA_TARGET_PORT);
-            objectSocket = new Socket("localhost", Program.OBJECT_TARGET_PORT);
-
             dataOut = new DataOutputStream(dataSocket.getOutputStream());
             dataIn = new DataInputStream(dataSocket.getInputStream());
-
+            
+            objectSocket = new Socket("localhost", Program.OBJECT_TARGET_PORT);
             objectOut = new ObjectOutputStream(objectSocket.getOutputStream());
-            objectOut.flush();
             objectIn = new ObjectInputStream(objectSocket.getInputStream());
 
             System.out.println("Client sockets sucessfully established");
