@@ -1,37 +1,50 @@
-
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class Host implements Runnable {
+public class Host extends User implements Runnable {
 
     ServerSocket server;
-    ClientHandler clientHandler;
+    Socket clientDataSocket;
+    Socket clientObjectSocket;
 
-    public Host() {
-        startHosting();
+    public Host(ServerSocket server) {
+        // Assign the server that is passed in
+        this.server = server;
+
+        // Make the host client connection run on another thread
+        new Thread(this).start();
     }
 
     @Override
     public void run() {
-        awaitClientConnection();
+        System.out.println("Hosting has begun");
+        System.out.println("Awaiting client");
+
+        listenForClientConnections();
     }
 
-    private void awaitClientConnection() {
-        try{
-            server = new ServerSocket(Program.TARGET_PORT);
-
-            Socket clientConnection = server.accept();
-            ClientHandler client = new ClientHandler(clientConnection);
-
-            clientHandler = client;
-
-        } catch (IOException e){
-            e.printStackTrace();
+    private void listenForClientConnections() {
+        while (true) { 
+            if(clientDataSocket != null && clientObjectSocket != null){
+                break;
+            }
+            try {
+                Socket clientConnection = server.accept();
+                if(clientDataSocket == null){
+                    clientDataSocket = clientConnection;
+                    System.out.println("Client data socket connected!");
+                }else if (clientObjectSocket == null) {
+                    clientObjectSocket = clientConnection;
+                    System.out.println("Client object socket connected!");
+                }else{
+                    System.out.println("Client attempted to connect but was rejected as another client has already been established");
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
-    }
 
-    private void startHosting() {
-        new Thread(this).start();
+        sendIntialDirectories();
     }
 }
