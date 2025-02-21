@@ -1,6 +1,7 @@
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -49,8 +50,8 @@ public class Host extends User {
 
                     System.out.println("Client data socket connected!");
 
-                    //Runnable handleIncomingData = this::handleIncomingData;
-                    //new Thread(handleIncomingData).start();
+                    Runnable handleIncomingData = this::handleIncomingData;
+                    new Thread(handleIncomingData).start();
 
                     if(objectOut != null) sendIntialDirectories();
                 }else{
@@ -68,11 +69,38 @@ public class Host extends User {
             System.out.println("Incoming Data Received");
             try {
                 String filePath = dataIn.readUTF();
+                sendFile(filePath);
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
     }
+
+    private void sendFile(String path) {
+		try {
+			System.out.println("Got file path");
+			File file = Paths.get(path).toFile();
+			
+			dataOut.writeUTF(file.getName());
+			System.out.println("Sent file name");
+			dataOut.writeLong(file.length());
+			System.out.println("Sent file length");
+			
+			byte[] buffer = new byte[Program.BUFFER_SIZE];
+			int bytesRead = 0;
+			
+			try(FileInputStream fis = new FileInputStream(file)){
+				while((bytesRead = fis.read(buffer)) != -1) {
+					dataOut.write(buffer, 0, bytesRead);
+					dataOut.flush();
+				}
+			}
+			
+			System.out.println("File sent");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 
     private void listenForClientObjectConnections(){
         while (true) { 
