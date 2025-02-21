@@ -128,13 +128,19 @@ public class Client extends User{
 
             String fullPath = null;
 
+            // Really need to refactor this!
             if(path.equals("..")){
                 String firstPath = currentDirectoryPathsMap.values().stream().findFirst().orElse(null);
                 
                 if(firstPath != null){
                     int slashIndex = firstPath.lastIndexOf("\\") == -1 ? 0 : firstPath.lastIndexOf("\\");
-                    fullPath = slashIndex != firstPath.length() - 1 ? firstPath.substring(0, slashIndex) : "";
-                    fullPath = fullPath.equals("") ? "" : fullPath.substring(0, fullPath.lastIndexOf("\\") == -1 ? fullPath.length() : fullPath.lastIndexOf("\\"));
+                    long numberOfSlashes = firstPath.chars().filter(ch -> ch == '\\').count();
+                    if (numberOfSlashes != 1) {
+                        fullPath = slashIndex != firstPath.length() - 1 ? firstPath.substring(0, slashIndex) : "";
+                        fullPath = fullPath.equals("") ? "" : fullPath.substring(0, fullPath.lastIndexOf("\\") == -1 ? fullPath.length() : fullPath.lastIndexOf("\\"));
+                    }else{
+                        fullPath = "";
+                    }
                 }
             }else{
                 fullPath = path.equals("") ? "" : currentDirectoryPathsMap.get(path);
@@ -144,7 +150,7 @@ public class Client extends User{
                 System.out.println("Invalid Path!");
                 return;
             }
-            System.out.println("Sending: " + fullPath);
+            
             objectOut.writeUTF(fullPath.trim());
             objectOut.flush();
         } catch (IOException e) {
