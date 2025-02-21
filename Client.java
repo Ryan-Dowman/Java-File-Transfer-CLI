@@ -6,6 +6,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 
 public class Client extends User{
@@ -23,6 +26,8 @@ public class Client extends User{
     Map<String, String> currentFilePathsMap = new HashMap<>();
 
     Queue<String> fileDownloadPaths = new LinkedList<>();
+    boolean downloadInProgress = false;
+    ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
 
     public Client() {
         createSocketConnections();
@@ -48,9 +53,26 @@ public class Client extends User{
             new Thread(listenForData).start();
             new Thread(listenForObjects).start();
 
+            // Constantly check for requested downloads
+            scheduledExecutorService.scheduleAtFixedRate(this::requestDownloads, 0, 1000, TimeUnit.MILLISECONDS);
+
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private void requestDownloads(){
+        if(!fileDownloadPaths.isEmpty() && downloadInProgress == false){
+            downloadInProgress = true;
+            String filePath = fileDownloadPaths.poll();
+            try {
+                dataOut.writeUTF(filePath);
+                dataOut.flush();
+                System.out.println("Sent for file: " + filePath);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }   
     }
 
     private void listenForData() {
@@ -89,7 +111,7 @@ public class Client extends User{
                 }
     
                 System.out.println(fileName + " file downloaded to Desktop sucessfully!");
-    
+                downloadInProgress = false;
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -126,6 +148,12 @@ public class Client extends User{
     public void sendObject(String path) {
         try {
 
+            if(currentFilePathsMap.get(path) != null){
+                System.out.println("File Requested: "+currentFilePathsMap.get(path));
+                fileDownloadPaths.add(currentFilePathsMap.get(path));
+                return;
+            }
+
             String fullPath = null;
 
             // Really need to refactor this!
@@ -150,7 +178,7 @@ public class Client extends User{
                 System.out.println("Invalid Path!");
                 return;
             }
-            
+
             objectOut.writeUTF(fullPath.trim());
             objectOut.flush();
         } catch (IOException e) {
@@ -164,6 +192,7 @@ public class Client extends User{
     }
 
     private void PopulateShortHandPathMap(List<String> paths, Map<String, String> pathsMap) {
+        if(paths.isEmpty()) return;
         pathsMap.clear();
         
         for(String path : paths){

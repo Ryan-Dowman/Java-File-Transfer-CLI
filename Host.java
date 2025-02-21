@@ -66,6 +66,11 @@ public class Host extends User {
     private void handleIncomingData(){
         while (true) { 
             System.out.println("Incoming Data Received");
+            try {
+                String filePath = dataIn.readUTF();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
