@@ -145,15 +145,15 @@ public class Client extends User{
         }
     }
 
+    public void requestFileDownload(String path) {
+        if(currentFilePathsMap.get(path) != null){
+            System.out.println("File Requested: "+currentFilePathsMap.get(path));
+            fileDownloadPaths.add(currentFilePathsMap.get(path));
+        }
+    }
+
     public void sendObject(String path) {
         try {
-
-            if(currentFilePathsMap.get(path) != null){
-                System.out.println("File Requested: "+currentFilePathsMap.get(path));
-                fileDownloadPaths.add(currentFilePathsMap.get(path));
-                return;
-            }
-
             String fullPath = null;
 
             // Really need to refactor this!

@@ -1,6 +1,10 @@
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
+import java.util.function.Consumer;
 
 public class Program {
     
@@ -13,27 +17,32 @@ public class Program {
     private static String input = "";
 
     public static void main(String[] args) {
+        listenForConnectionType();
+    }
+
+    private static void listenForConnectionType(){
+        List<String> validClientCommands = Arrays.asList("c", "client");
+        List<String> validHostCommands = Arrays.asList("h", "host");
         
-        // Register whether to create a host user or client user
-        while(!input.equals("c") && !input.equals("h")){
+        while(!validClientCommands.contains(input.toLowerCase()) && !validHostCommands.contains(input.toLowerCase())){
             System.out.println("Host(h) or Client(c)?");
             input = inputScanner.nextLine();
         }
 
-        if(input.equals("h")) intialiseUserAsHost();
-        else if(input.equals("c")) intialiseUserAsClient();
+        if(validHostCommands.contains(input.toLowerCase())) intialiseUserAsHost();
+        else if(validClientCommands.contains(input.toLowerCase())) intialiseUserAsClient();
     }
 
     private static void intialiseUserAsHost() {
         try {
             user = new Host(new ServerSocket(DATA_TARGET_PORT), new ServerSocket(OBJECT_TARGET_PORT));
-            
-            input = "";
-            while(!input.equals("close")){
-                input = inputScanner.nextLine();
-            } 
+            Host host = (Host) user;
 
-            //user.ShutDown();
+            Map<String, Consumer<String>> hostCommandFunctionMap = Map.of(
+                "boot", _ -> host.bootClient()
+            );
+
+            handleUserInputs(hostCommandFunctionMap);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -43,15 +52,32 @@ public class Program {
     private static void intialiseUserAsClient() {
         user = new Client();
         Client client = (Client) user;
+        
+        Map<String, Consumer<String>> clientCommandFunctionMap = Map.of(
+            "cd", client::sendObject,
+            "download", client::requestFileDownload
+        );
 
-        input = "";
-        while(!input.equals("close")){
-            input = inputScanner.nextLine();
-            client.sendObject(input);
-        }
-
-        //user.ShutDown();
+        handleUserInputs(clientCommandFunctionMap);
     }
 
-    
+    private static  void handleUserInputs(Map<String, Consumer<String>> commandFunctionMap){
+        
+        input = "";
+        while(!input.equals("exit")){
+            input = inputScanner.nextLine();
+            String[] splitCommandString = input.split(" ");
+
+            if(splitCommandString.length != 2) {
+                System.out.println("Invalid Command!");
+                continue;
+            }
+            
+            String inputCommand = input.split(" ")[0];
+            String inputTarget = input.split(" ")[1];
+
+            commandFunctionMap.getOrDefault(inputCommand.toLowerCase(), _ -> System.out.println("Invalid Command!")).accept(inputTarget);
+            
+        }
+    }
 }

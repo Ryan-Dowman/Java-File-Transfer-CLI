@@ -76,7 +76,7 @@ public class Host extends User {
         }
     }
 
-    private void sendFile(String path) {
+    public void sendFile(String path) {
 		try {
 			System.out.println("Got file path");
 			File file = Paths.get(path).toFile();
@@ -183,5 +183,9 @@ public class Host extends User {
     @Override
     void ShutDown() {
         throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public void bootClient(){
+
     }
 }
