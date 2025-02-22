@@ -35,7 +35,6 @@ public class Client extends User{
 
     private void createSocketConnections() {
         try {
-            // Data socket is expected first so must be created first
             dataSocket = new Socket("localhost", Program.DATA_TARGET_PORT);
             dataOut = new DataOutputStream(dataSocket.getOutputStream());
             dataIn = new DataInputStream(dataSocket.getInputStream());
@@ -49,11 +48,9 @@ public class Client extends User{
             Runnable listenForData = this::listenForData;
             Runnable listenForObjects = this::listenForObjects;
 
-            // Place each socket listening on different threads to ensure that the processes do not halt one another
             new Thread(listenForData).start();
             new Thread(listenForObjects).start();
 
-            // Constantly check for requested downloads
             scheduledExecutorService.scheduleAtFixedRate(this::requestDownloads, 0, 1000, TimeUnit.MILLISECONDS);
 
         } catch (IOException e) {
@@ -68,7 +65,6 @@ public class Client extends User{
             try {
                 dataOut.writeUTF(filePath);
                 dataOut.flush();
-                System.out.println("Sent for file: " + filePath);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -76,31 +72,19 @@ public class Client extends User{
     }
 
     private void listenForData() {
-        System.out.println("Waiting for data...");
         while(true){
             try {
             
-                // First thing that will come in is the file name
                 String fileName = dataIn.readUTF();
-    
-                // Second thing will be the file size
                 long fileSize = dataIn.readLong();
     
-                // Intialise a buffer to handle the insertion of data
                 byte[] buffer = new byte[Program.BUFFER_SIZE];
-    
-                // Track how many total bytes have been read in each iteration of collecting file data
                 int bytesRead = 0;
-    
-                // Track how many total bytes have been read so we know when the file is done
                 long totalBytesRead = 0;
     
-                // Get the path of the current user's desktop (compatible for multiple OS's)
                 String desktopPath = System.getProperty("user.home") + File.separator + "Desktop";
-    
                 String filePath = desktopPath + File.separator + fileName;
     
-                // Create the file output stream in a try block to ensure correct closure of resources
                 try(FileOutputStream fos = new FileOutputStream(filePath)){
                     while (totalBytesRead < fileSize && (bytesRead = dataIn.read(buffer)) != -1) { 
                         fos.write(buffer, 0, bytesRead);
@@ -126,7 +110,6 @@ public class Client extends User{
                 List<String> filePaths = filesAndDirectories.files;
                 List<String> directoryPaths = filesAndDirectories.directories;
     
-                // We will use these to help navigate based on short hand versions of paths
                 PopulateShortHandPathMap(filePaths, currentFilePathsMap);
                 PopulateShortHandPathMap(directoryPaths, currentDirectoryPathsMap);
 
@@ -147,29 +130,19 @@ public class Client extends User{
 
     public void requestFileDownload(String path) {
         if(currentFilePathsMap.get(path) != null){
-            System.out.println("File Requested: "+currentFilePathsMap.get(path));
+            System.out.println(path + " added to download request");
             fileDownloadPaths.add(currentFilePathsMap.get(path));
+        }else{
+            System.out.println("Not a valid file!");
         }
     }
 
     public void sendObject(String path) {
         try {
-            String fullPath = null;
+            String fullPath;
 
-            // Really need to refactor this!
             if(path.equals("..")){
-                String firstPath = currentDirectoryPathsMap.values().stream().findFirst().orElse(null);
-                
-                if(firstPath != null){
-                    int slashIndex = firstPath.lastIndexOf("\\") == -1 ? 0 : firstPath.lastIndexOf("\\");
-                    long numberOfSlashes = firstPath.chars().filter(ch -> ch == '\\').count();
-                    if (numberOfSlashes != 1) {
-                        fullPath = slashIndex != firstPath.length() - 1 ? firstPath.substring(0, slashIndex) : "";
-                        fullPath = fullPath.equals("") ? "" : fullPath.substring(0, fullPath.lastIndexOf("\\") == -1 ? fullPath.length() : fullPath.lastIndexOf("\\"));
-                    }else{
-                        fullPath = "";
-                    }
-                }
+                fullPath = returnParentFolder();
             }else{
                 fullPath = path.equals("") ? "" : currentDirectoryPathsMap.get(path);
             }
@@ -184,7 +157,22 @@ public class Client extends User{
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }    
+    }   
+    
+    private String returnParentFolder(){
+        String parentPath = "";
+        String firstPath = currentDirectoryPathsMap.values().stream().findFirst().orElse(null);
+
+        if(firstPath == null) return null;
+
+        String[] pathParts = firstPath.split("\\\\");
+        
+        for(int index = 0; index < pathParts.length - 2; index++){
+            parentPath += pathParts[index] + "\\";
+        }
+
+        return parentPath;
+    }
 
     private void PopulateShortHandPathMap(List<String> paths, Map<String, String> pathsMap) {
         if(paths.isEmpty()) return;

@@ -54,7 +54,7 @@ public class Host extends User {
 
                     if(objectOut != null) sendIntialDirectories();
                 }else{
-                    System.out.println("Client attempted to connect but was rejected as another client has already been established");
+                    System.out.println("Client data socket attempted to connect but was rejected as another client has already been established");
                     clientDataConnection.close();
                 }
             } catch (IOException e) {
@@ -78,7 +78,7 @@ public class Host extends User {
 
                     if(dataOut != null) sendIntialDirectories();
                 }else{
-                    System.out.println("Client attempted to connect but was rejected as another client has already been established");
+                    System.out.println("Client object socket attempted to connect but was rejected as another client has already been established");
                     clientObjectConnection.close();
                 }
             } catch (IOException e) {
@@ -99,6 +99,7 @@ public class Host extends User {
             
             File directory = requestedDirectoryPath.toFile();			
             File[] files = stringRequestedDirectoryPath.equals("") ? File.listRoots() : directory.listFiles();
+            if(files == null) files = new File[0];
             
             FilesAndDirectories filesAndDirectories = createFilesAndDirectoriesFromFiles(files);
 
@@ -133,7 +134,12 @@ public class Host extends User {
                 String filePath = dataIn.readUTF();
                 sendFile(filePath);
             } catch (IOException e) {
-                e.printStackTrace();
+                if(e.getMessage().contains("Connection reset")) {
+                    System.out.println("Client data connection was lost");
+                    bootClient();
+                    break;
+                }
+                else e.printStackTrace();
             }
         }
     }
@@ -167,7 +173,12 @@ public class Host extends User {
                 String path = objectIn.readUTF();
                 sendObject(path);
             } catch (IOException e) {
-                e.printStackTrace();
+                if(e.getMessage().contains("Connection reset")) {
+                    System.out.println("Client object connection was lost");
+                    bootClient();
+                    break;
+                }
+                else e.printStackTrace();
             }
         }
     }
@@ -182,7 +193,7 @@ public class Host extends User {
         objectIn = null;
         objectOut = null;
 
-        System.out.println("Current client booted");
+        System.out.println("Dropping client socket(s)");
     }
 
     
