@@ -30,12 +30,13 @@ public class Host extends User {
         this.dataServer = dataServer;
         this.objectServer = objectServer;
 
-        // Make the host client connection run on another thread
         Runnable listenForClientDataConnections = this::listenForClientDataConnections;
         Runnable listenForClientObjectConnections = this::listenForClientObjectConnections;
 
         new Thread(listenForClientDataConnections).start();
         new Thread(listenForClientObjectConnections).start();
+
+        System.out.println("Waiting for client...");
     }
 
     private void listenForClientDataConnections(){
@@ -47,8 +48,6 @@ public class Host extends User {
 
                     dataOut = new DataOutputStream(clientDataSocket.getOutputStream());
                     dataIn = new DataInputStream(clientDataSocket.getInputStream());
-
-                    System.out.println("Client data socket connected!");
 
                     Runnable handleIncomingData = this::handleIncomingData;
                     new Thread(handleIncomingData).start();
@@ -64,44 +63,6 @@ public class Host extends User {
         }
     }
 
-    private void handleIncomingData(){
-        while (true) { 
-            System.out.println("Incoming Data Received");
-            try {
-                String filePath = dataIn.readUTF();
-                sendFile(filePath);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    public void sendFile(String path) {
-		try {
-			System.out.println("Got file path");
-			File file = Paths.get(path).toFile();
-			
-			dataOut.writeUTF(file.getName());
-			System.out.println("Sent file name");
-			dataOut.writeLong(file.length());
-			System.out.println("Sent file length");
-			
-			byte[] buffer = new byte[Program.BUFFER_SIZE];
-			int bytesRead = 0;
-			
-			try(FileInputStream fis = new FileInputStream(file)){
-				while((bytesRead = fis.read(buffer)) != -1) {
-					dataOut.write(buffer, 0, bytesRead);
-					dataOut.flush();
-				}
-			}
-			
-			System.out.println("File sent");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
     private void listenForClientObjectConnections(){
         while (true) { 
             try {
@@ -111,8 +72,6 @@ public class Host extends User {
 
                     objectOut = new ObjectOutputStream(clientObjectSocket.getOutputStream());
                     objectIn = new ObjectInputStream(clientObjectSocket.getInputStream());
-
-                    System.out.println("Client object socket connected!");
 
                     Runnable handleIncomingObject = this::handleIncomingObject;
                     new Thread(handleIncomingObject).start();
@@ -128,18 +87,9 @@ public class Host extends User {
         }
     }
 
-    private void handleIncomingObject(){
-        System.out.println("Listening for incoming objects...");
-        while(true) { 
-            try {
-                String path = objectIn.readUTF();
-                System.out.println("Incoming Object Received: " + path);
-
-                sendObject(path);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+    private void sendIntialDirectories(){
+        System.out.println("Client sucessfully connected!");
+        sendObject("");
     }
 
     private void sendObject(String path){
@@ -154,15 +104,12 @@ public class Host extends User {
 
             objectOut.writeObject(filesAndDirectories);
             objectOut.flush();
-            System.out.println("Sent for: " + path);
+            
+            if(path.equals(""))System.out.println("Client inside root directory");
+            else System.out.println("Client inside " + path);
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    private void sendIntialDirectories(){
-        System.out.println("Client sucessfully connected!");
-        sendObject("");
     }
 
     private FilesAndDirectories createFilesAndDirectoriesFromFiles(File[] files) {
@@ -180,12 +127,72 @@ public class Host extends User {
         return filesAndDirectories;
     }
 
-    @Override
-    void ShutDown() {
-        throw new UnsupportedOperationException("Not supported yet.");
+    private void handleIncomingData(){
+        while (true) { 
+            try {
+                String filePath = dataIn.readUTF();
+                sendFile(filePath);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void sendFile(String path) {
+		try {
+			File file = Paths.get(path).toFile();
+			
+			dataOut.writeUTF(file.getName());
+			dataOut.writeLong(file.length());
+			
+			byte[] buffer = new byte[Program.BUFFER_SIZE];
+			int bytesRead = 0;
+			
+			try(FileInputStream fis = new FileInputStream(file)){
+				while((bytesRead = fis.read(buffer)) != -1) {
+					dataOut.write(buffer, 0, bytesRead);
+					dataOut.flush();
+				}
+			}
+			
+			System.out.println("Client downloaded " + path);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+    private void handleIncomingObject(){
+        while(true) { 
+            try {
+                String path = objectIn.readUTF();
+                sendObject(path);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public void bootClient(){
+        clientDataSocket = null;
+        clientObjectSocket = null;
 
+        dataIn = null;
+        dataOut = null;
+
+        objectIn = null;
+        objectOut = null;
+
+        System.out.println("Current client booted");
+    }
+
+    
+    @Override
+    void ShutDown() {
+        try {
+            this.dataServer.close();
+            this.objectServer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

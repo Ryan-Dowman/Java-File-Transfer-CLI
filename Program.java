@@ -31,6 +31,7 @@ public class Program {
 
         if(validHostCommands.contains(input.toLowerCase())) intialiseUserAsHost();
         else if(validClientCommands.contains(input.toLowerCase())) intialiseUserAsClient();
+        else System.out.println("Failure to recognise user type");
     }
 
     private static void intialiseUserAsHost() {
@@ -39,7 +40,8 @@ public class Program {
             Host host = (Host) user;
 
             Map<String, Consumer<String>> hostCommandFunctionMap = Map.of(
-                "boot", _ -> host.bootClient()
+                "boot", _ -> host.bootClient(),
+                "exit", _ -> System.out.println("Goodbye")
             );
 
             handleUserInputs(hostCommandFunctionMap);
@@ -55,7 +57,8 @@ public class Program {
         
         Map<String, Consumer<String>> clientCommandFunctionMap = Map.of(
             "cd", client::sendObject,
-            "download", client::requestFileDownload
+            "download", client::requestFileDownload,
+            "exit", _ -> System.out.println("Goodbye")
         );
 
         handleUserInputs(clientCommandFunctionMap);
@@ -64,20 +67,22 @@ public class Program {
     private static  void handleUserInputs(Map<String, Consumer<String>> commandFunctionMap){
         
         input = "";
-        while(!input.equals("exit")){
+        while(!input.toLowerCase().equals("exit")){
             input = inputScanner.nextLine();
             String[] splitCommandString = input.split(" ");
-
-            if(splitCommandString.length != 2) {
+            
+            if(splitCommandString.length > 2){
                 System.out.println("Invalid Command!");
                 continue;
-            }
-            
-            String inputCommand = input.split(" ")[0];
-            String inputTarget = input.split(" ")[1];
+            } 
+
+            String inputCommand = splitCommandString[0];
+            String inputTarget = splitCommandString.length == 2 ? splitCommandString[1] : "";
 
             commandFunctionMap.getOrDefault(inputCommand.toLowerCase(), _ -> System.out.println("Invalid Command!")).accept(inputTarget);
             
         }
+
+        user.ShutDown();
     }
 }

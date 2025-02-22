@@ -186,11 +186,6 @@ public class Client extends User{
         }
     }    
 
-    @Override
-    void ShutDown() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
     private void PopulateShortHandPathMap(List<String> paths, Map<String, String> pathsMap) {
         if(paths.isEmpty()) return;
         pathsMap.clear();
@@ -199,6 +194,16 @@ public class Client extends User{
             int slashIndex = path.lastIndexOf("\\") == -1 ? 0 : path.lastIndexOf("\\") + 1;
             String shortHandPath = slashIndex < path.length() - 1 ? path.substring(slashIndex, path.length()) : path;
             pathsMap.put(shortHandPath, path);
+        }
+    }
+    
+    @Override
+    void ShutDown() {
+        try {
+            this.dataSocket.close();
+            this.objectSocket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }
