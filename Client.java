@@ -73,7 +73,7 @@ public class Client extends User{
     }
 
     private void listenForData() {
-        while(true){
+        while(!dataSocket.isClosed()){
             try {
             
                 String fileName = dataIn.readUTF();
@@ -90,7 +90,6 @@ public class Client extends User{
                     while (totalBytesRead < fileSize && (bytesRead = dataIn.read(buffer)) != -1) { 
                         fos.write(buffer, 0, bytesRead);
                         fos.flush();
-    
                         totalBytesRead += bytesRead;
                     }
                 }
@@ -98,13 +97,16 @@ public class Client extends User{
                 System.out.println(fileName + " file downloaded to Desktop sucessfully!");
                 downloadInProgress = false;
             } catch (IOException e) {
-                e.printStackTrace();
+                if(e.getMessage() != null && e.getMessage().contains("Socket closed")) {
+                    System.out.println("Data socket disconnected");
+                }
+                else e.printStackTrace();
             }
         }
     }
 
     private void listenForObjects() {
-        while(true) { 
+        while(!objectSocket.isClosed()) { 
             try {
                 FilesAndDirectories filesAndDirectories = (FilesAndDirectories) objectIn.readObject();
     
@@ -123,7 +125,10 @@ public class Client extends User{
                 }
 
             } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace();
+                if(e.getMessage() != null && e.getMessage().contains("Socket closed")) {
+                    System.out.println("Object socket disconnected");
+                }
+                else e.printStackTrace();
             }    
         }
     }
@@ -188,7 +193,10 @@ public class Client extends User{
     @Override
     void ShutDown() {
         try {
+            this.dataOut.flush();
             this.dataSocket.close();
+            
+            this.objectOut.flush();
             this.objectSocket.close();
         } catch (IOException e) {
             e.printStackTrace();

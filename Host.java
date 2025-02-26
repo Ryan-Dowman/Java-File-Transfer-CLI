@@ -1,5 +1,6 @@
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -26,6 +27,9 @@ public class Host extends User {
     ObjectInputStream objectIn;
     ObjectOutputStream objectOut;
 
+    Thread listenForClientDataConnectionsThread;
+    Thread listenForClientObjectConnectionsThread;
+
     public Host(ServerSocket dataServer, ServerSocket objectServer) {
         this.dataServer = dataServer;
         this.objectServer = objectServer;
@@ -33,14 +37,17 @@ public class Host extends User {
         Runnable listenForClientDataConnections = this::listenForClientDataConnections;
         Runnable listenForClientObjectConnections = this::listenForClientObjectConnections;
 
-        new Thread(listenForClientDataConnections).start();
-        new Thread(listenForClientObjectConnections).start();
+        this.listenForClientDataConnectionsThread = new Thread(listenForClientDataConnections);
+        this.listenForClientDataConnectionsThread.start();
+
+        this.listenForClientObjectConnectionsThread = new Thread(listenForClientObjectConnections);
+        this.listenForClientObjectConnectionsThread.start();
 
         System.out.println("Waiting for client...");
     }
 
     private void listenForClientDataConnections(){
-        while (true) { 
+        while (!Thread.currentThread().isInterrupted()) { 
             try {
                 Socket clientDataConnection = dataServer.accept();
                 if(clientDataSocket == null){
@@ -58,13 +65,14 @@ public class Host extends User {
                     clientDataConnection.close();
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                if (dataServer.isClosed()) break;
+                else e.printStackTrace();
             }
         }
     }
 
     private void listenForClientObjectConnections(){
-        while (true) { 
+        while (!Thread.currentThread().isInterrupted()) { 
             try {
                 Socket clientObjectConnection = objectServer.accept();
                 if(clientObjectSocket == null){
@@ -82,7 +90,8 @@ public class Host extends User {
                     clientObjectConnection.close();
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                if (objectServer.isClosed()) break;
+                else e.printStackTrace();
             }
         }
     }
@@ -134,7 +143,7 @@ public class Host extends User {
                 String filePath = dataIn.readUTF();
                 sendFile(filePath);
             } catch (IOException e) {
-                if(e.getMessage().contains("Connection reset")) {
+                if((clientDataSocket.isClosed()) || (e instanceof EOFException) || (e.getMessage() != null && e.getMessage().contains("Connection reset"))) {
                     System.out.println("Client data connection was lost");
                     bootClient();
                     break;
@@ -173,7 +182,7 @@ public class Host extends User {
                 String path = objectIn.readUTF();
                 sendObject(path);
             } catch (IOException e) {
-                if(e.getMessage().contains("Connection reset")) {
+                if((clientObjectSocket.isClosed()) || (e instanceof EOFException) || (e.getMessage() != null && e.getMessage().contains("Connection reset"))) {
                     System.out.println("Client object connection was lost");
                     bootClient();
                     break;
@@ -200,6 +209,9 @@ public class Host extends User {
     @Override
     void ShutDown() {
         try {
+            if(this.listenForClientDataConnectionsThread != null) this.listenForClientDataConnectionsThread.interrupt();
+            if(this.listenForClientObjectConnectionsThread != null) this.listenForClientObjectConnectionsThread.interrupt();
+
             this.dataServer.close();
             this.objectServer.close();
         } catch (IOException e) {

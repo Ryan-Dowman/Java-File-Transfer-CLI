@@ -12,7 +12,7 @@ public class Program {
     
     public static int DATA_TARGET_PORT = 5000;
     public static int OBJECT_TARGET_PORT = 5001;
-	public static final int BUFFER_SIZE = 32 * 1024; //32KB 
+	public static final int BUFFER_SIZE = 32 * 1024; // 32KB 
 
     private static User user;
     private final static Scanner inputScanner = new Scanner(System.in);
@@ -43,7 +43,7 @@ public class Program {
 
             Map<String, Consumer<String>> hostCommandFunctionMap = Map.of(
                 "boot", _ -> host.bootClient(),
-                "exit", _ -> System.out.println("Goodbye")
+                "exit", _ -> System.out.println("")
             );
 
             try {
@@ -73,7 +73,7 @@ public class Program {
         Map<String, Consumer<String>> clientCommandFunctionMap = Map.of(
             "cd", client::sendObject,
             "download", client::requestFileDownload,
-            "exit", _ -> System.out.println("Goodbye")
+            "exit", _ -> System.out.println("")
         );
 
         handleUserInputs(clientCommandFunctionMap);
