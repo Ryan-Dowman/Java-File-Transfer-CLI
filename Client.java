@@ -29,17 +29,17 @@ public class Client extends User{
     boolean downloadInProgress = false;
     ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
 
-    public Client() {
-        createSocketConnections();
+    public Client(String ipAddress) {
+        createSocketConnections(ipAddress);
     }
 
-    private void createSocketConnections() {
+    private void createSocketConnections(String ipAddress) {
         try {
-            dataSocket = new Socket("localhost", Program.DATA_TARGET_PORT);
+            dataSocket = new Socket(ipAddress, Program.DATA_TARGET_PORT);
             dataOut = new DataOutputStream(dataSocket.getOutputStream());
             dataIn = new DataInputStream(dataSocket.getInputStream());
             
-            objectSocket = new Socket("localhost", Program.OBJECT_TARGET_PORT);
+            objectSocket = new Socket(ipAddress, Program.OBJECT_TARGET_PORT);
             objectOut = new ObjectOutputStream(objectSocket.getOutputStream());
             objectIn = new ObjectInputStream(objectSocket.getInputStream());
 
@@ -54,6 +54,7 @@ public class Client extends User{
             scheduledExecutorService.scheduleAtFixedRate(this::requestDownloads, 0, 1000, TimeUnit.MILLISECONDS);
 
         } catch (IOException e) {
+            // Handle Connection failure
             e.printStackTrace();
         }
     }
@@ -121,7 +122,6 @@ public class Client extends User{
                     System.out.println(directoryPath);
                 }
 
-                System.out.print("> ");
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
             }    

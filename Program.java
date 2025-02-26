@@ -1,5 +1,7 @@
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +46,13 @@ public class Program {
                 "exit", _ -> System.out.println("Goodbye")
             );
 
+            try {
+                String ipAddress = InetAddress.getLocalHost().getHostAddress(); 
+                System.out.println("Hosting on " + ipAddress + " (provide to client program)");
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+            }
+
             handleUserInputs(hostCommandFunctionMap);
 
         } catch (IOException e) {
@@ -52,7 +61,13 @@ public class Program {
     }
 
     private static void intialiseUserAsClient() {
-        user = new Client();
+        
+        input = "";
+
+        System.out.println("Input IP Address for host: ");
+        input = inputScanner.nextLine();
+        
+        user = new Client(input);
         Client client = (Client) user;
         
         Map<String, Consumer<String>> clientCommandFunctionMap = Map.of(
@@ -80,7 +95,6 @@ public class Program {
             String inputTarget = splitCommandString.length == 2 ? splitCommandString[1] : "";
 
             commandFunctionMap.getOrDefault(inputCommand.toLowerCase(), _ -> System.out.println("Invalid Command!")).accept(inputTarget);
-            
         }
 
         user.ShutDown();
