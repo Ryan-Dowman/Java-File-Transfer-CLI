@@ -56,8 +56,19 @@ public class Client extends User{
             scheduledExecutorService.scheduleAtFixedRate(this::requestDownloads, 0, 1000, TimeUnit.MILLISECONDS);
 
         } catch (IOException e) {
-            // Handle Connection failure
-            e.printStackTrace();
+            if((e instanceof EOFException) || (e.getMessage() != null && e.getMessage().contains("An established connection was aborted by the software in your host machine"))) {
+                System.out.println("Host has already connected with another client!");
+                System.out.println("Waiting 3s to try reconnect");
+                try {
+                    ShutDown();
+                    Thread.sleep(3000);   
+                } catch (Exception e2) {
+                    System.out.println("hell");
+                    e2.printStackTrace();
+                }
+                createSocketConnections(ipAddress);
+            }
+            else e.printStackTrace();
         }
     }
 
@@ -69,7 +80,8 @@ public class Client extends User{
                 dataOut.writeUTF(filePath);
                 dataOut.flush();
             } catch (IOException e) {
-                e.printStackTrace();
+                if(e.getMessage() != null && e.getMessage().contains("Socket closed"));
+                else e.printStackTrace();
             }
         }   
     }
