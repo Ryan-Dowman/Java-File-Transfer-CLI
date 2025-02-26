@@ -116,8 +116,8 @@ public class Client extends User{
                 List<String> directoryPaths = filesAndDirectories.directories;
                 
                 if(downloadNextFolder){
-                    for(String directoryPath : directoryPaths){
-                        requestFileDownload(directoryPath, true);
+                    for(String filePath : filePaths){
+                        requestFileDownload(filePath, true);
                     }
                     downloadNextFolder = false;
                     continue;

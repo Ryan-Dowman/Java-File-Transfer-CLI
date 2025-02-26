@@ -133,7 +133,7 @@ public class Host extends User {
         List<String> directoryPaths = new ArrayList<>();
 
         for(File file : files){
-            if(file.isFile()) filePaths.add(file.getPath());
+            if(file.isFile() && file.canRead() && file.canWrite() && !file.isHidden() && !file.getName().equalsIgnoreCase("desktop.ini")) filePaths.add(file.getPath());
             else if(file.isDirectory()) directoryPaths.add(file.getPath());
         }
         
@@ -160,7 +160,9 @@ public class Host extends User {
 
     public void sendFile(String path) {
 		try {
-			File file = Paths.get(path).toFile();
+            File file = Paths.get(path).toFile();
+            System.out.println("Sending file: " + file.getPath() + " | Exists: " + file.exists() + " | Readable: " + file.canRead()+ " | Writeable: " + file.canWrite());
+            System.out.println("Is Directory: " + file.isDirectory());
 			
 			dataOut.writeUTF(file.getName());
 			dataOut.writeLong(file.length());
