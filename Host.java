@@ -59,7 +59,10 @@ public class Host extends User {
                     Runnable handleIncomingData = this::handleIncomingData;
                     new Thread(handleIncomingData).start();
 
-                    if(objectOut != null) sendIntialDirectories();
+                    if(objectOut != null){
+                        System.out.println("Client sucessfully connected!");
+                        sendIntialDirectories();
+                    }
                 }else{
                     System.out.println("Client data socket attempted to connect but was rejected as another client has already been established");
                     clientDataConnection.close();
@@ -84,7 +87,10 @@ public class Host extends User {
                     Runnable handleIncomingObject = this::handleIncomingObject;
                     new Thread(handleIncomingObject).start();
 
-                    if(dataOut != null) sendIntialDirectories();
+                    if(dataOut != null){
+                        System.out.println("Client sucessfully connected!");
+                        sendIntialDirectories();
+                    }
                 }else{
                     System.out.println("Client object socket attempted to connect but was rejected as another client has already been established");
                     clientObjectConnection.close();
@@ -97,7 +103,6 @@ public class Host extends User {
     }
 
     private void sendIntialDirectories(){
-        System.out.println("Client sucessfully connected!");
         sendObject("");
     }
 

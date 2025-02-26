@@ -29,6 +29,8 @@ public class Client extends User{
     boolean downloadInProgress = false;
     ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
 
+    boolean downloadNextFolder = false; // Stops console logging values
+
     public Client(String ipAddress) {
         createSocketConnections(ipAddress);
     }
@@ -112,7 +114,15 @@ public class Client extends User{
     
                 List<String> filePaths = filesAndDirectories.files;
                 List<String> directoryPaths = filesAndDirectories.directories;
-    
+                
+                if(downloadNextFolder){
+                    for(String directoryPath : directoryPaths){
+                        requestFileDownload(directoryPath, true);
+                    }
+                    downloadNextFolder = false;
+                    continue;
+                }
+
                 PopulateShortHandPathMap(filePaths, currentFilePathsMap);
                 PopulateShortHandPathMap(directoryPaths, currentDirectoryPathsMap);
 
@@ -134,19 +144,36 @@ public class Client extends User{
     }
 
     public void requestFileDownload(String path) {
-        if(currentFilePathsMap.get(path) != null){
+        requestFileDownload(path, false);
+    }
+
+    // Force download is for downloading all files in folders as the filePathMap and folderPathMap will not be updated
+    public void requestFileDownload(String path, boolean forceDownload) {
+        if (forceDownload) {
+            System.out.println(path + " added to download request");
+            fileDownloadPaths.add(path);
+        }else if(currentFilePathsMap.get(path) != null){
             System.out.println(path + " added to download request");
             fileDownloadPaths.add(currentFilePathsMap.get(path));
+        }else if(currentDirectoryPathsMap.get(path) != null){
+            System.out.println("Requesting directory direct children files");
+            downloadNextFolder = true;
+            sendObject(currentDirectoryPathsMap.get(path), true);
         }else{
             System.out.println("Not a valid file!");
         }
     }
-
+    
     public void sendObject(String path) {
+        sendObject(path, false);
+    }
+
+    public void sendObject(String path, boolean isFullPath) {
         try {
             String fullPath;
-
-            if(path.equals("..")){
+            if(isFullPath){
+                fullPath = path;
+            }else if(path.equals("..")){
                 fullPath = returnParentFolder();
             }else{
                 fullPath = path.equals("") ? "" : currentDirectoryPathsMap.get(path);
@@ -194,10 +221,10 @@ public class Client extends User{
     void ShutDown() {
         try {
             this.dataOut.flush();
-            this.dataSocket.close();
+            if(dataSocket != null && !dataSocket.isClosed()) this.dataSocket.close();
             
             this.objectOut.flush();
-            this.objectSocket.close();
+            if(objectSocket != null && !objectSocket.isClosed()) this.objectSocket.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
