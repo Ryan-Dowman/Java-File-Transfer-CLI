@@ -42,8 +42,8 @@ public class Program {
             Host host = (Host) user;
 
             Map<String, Consumer<String>> hostCommandFunctionMap = Map.of(
-                "boot", _ -> host.bootClient(),
-                "exit", _ -> System.out.println("")
+                "boot", x -> host.bootClient(),
+                "exit", x -> System.out.println("")
             );
 
             try {
@@ -73,7 +73,7 @@ public class Program {
         Map<String, Consumer<String>> clientCommandFunctionMap = Map.of(
             "cd", client::sendObject,
             "download", client::requestFileDownload,
-            "exit", _ -> System.out.println("")
+            "exit", x -> System.out.println("")
         );
 
         handleUserInputs(clientCommandFunctionMap);
@@ -94,7 +94,7 @@ public class Program {
             String inputCommand = splitCommandString[0];
             String inputTarget = splitCommandString.length == 2 ? splitCommandString[1] : "";
 
-            commandFunctionMap.getOrDefault(inputCommand.toLowerCase(), _ -> System.out.println("Invalid Command!")).accept(inputTarget);
+            commandFunctionMap.getOrDefault(inputCommand.toLowerCase(), x -> System.out.println("Invalid Command!")).accept(inputTarget);
         }
 
         user.ShutDown();
