@@ -161,8 +161,6 @@ public class Host extends User {
     public void sendFile(String path) {
 		try {
             File file = Paths.get(path).toFile();
-            System.out.println("Sending file: " + file.getPath() + " | Exists: " + file.exists() + " | Readable: " + file.canRead()+ " | Writeable: " + file.canWrite());
-            System.out.println("Is Directory: " + file.isDirectory());
 			
 			dataOut.writeUTF(file.getName());
 			dataOut.writeLong(file.length());

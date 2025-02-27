@@ -1,4 +1,3 @@
-
 import java.io.*;
 import java.net.Socket;
 import java.util.HashMap;
@@ -63,10 +62,11 @@ public class Client extends User{
                     ShutDown();
                     Thread.sleep(3000);   
                 } catch (Exception e2) {
-                    System.out.println("hell");
                     e2.printStackTrace();
                 }
                 createSocketConnections(ipAddress);
+            }else if(e.getMessage() != null || e.getMessage().contains("Connection refused")){
+                System.out.println("Host does not exist!");
             }
             else e.printStackTrace();
         }
@@ -113,6 +113,9 @@ public class Client extends User{
             } catch (IOException e) {
                 if(e.getMessage() != null && e.getMessage().contains("Socket closed")) {
                     System.out.println("Data socket disconnected");
+                }else if (e.getMessage() != null && e.getMessage().contains("Connection reset")) {
+                    System.out.println("Host connection has been lost");
+                    ShutDown();
                 }
                 else e.printStackTrace();
             }
@@ -149,6 +152,9 @@ public class Client extends User{
             } catch (IOException | ClassNotFoundException e) {
                 if(e.getMessage() != null && e.getMessage().contains("Socket closed")) {
                     System.out.println("Object socket disconnected");
+                }else if (e.getMessage() != null && e.getMessage().contains("Connection reset")) {
+                    System.out.println("Host connection has been lost");
+                    ShutDown();
                 }
                 else e.printStackTrace();
             }    
@@ -206,7 +212,8 @@ public class Client extends User{
     private String returnParentFolder(){
         String parentPath = "";
         String firstPath = currentDirectoryPathsMap.values().stream().findFirst().orElse(null);
-
+        
+        if(firstPath == null) firstPath = currentFilePathsMap.values().stream().findFirst().orElse(null);
         if(firstPath == null) return null;
 
         String[] pathParts = firstPath.split("\\\\");
@@ -219,8 +226,8 @@ public class Client extends User{
     }
 
     private void PopulateShortHandPathMap(List<String> paths, Map<String, String> pathsMap) {
-        if(paths.isEmpty()) return;
         pathsMap.clear();
+        if(paths.isEmpty()) return;
         
         for(String path : paths){
             int slashIndex = path.lastIndexOf("\\") == -1 ? 0 : path.lastIndexOf("\\") + 1;
@@ -232,10 +239,10 @@ public class Client extends User{
     @Override
     void ShutDown() {
         try {
-            this.dataOut.flush();
+            if(this.dataOut != null) this.dataOut.flush();
             if(dataSocket != null && !dataSocket.isClosed()) this.dataSocket.close();
             
-            this.objectOut.flush();
+            if(this.objectOut != null) this.objectOut.flush();
             if(objectSocket != null && !objectSocket.isClosed()) this.objectSocket.close();
         } catch (IOException e) {
             e.printStackTrace();
