@@ -1,4 +1,4 @@
-![Group 20](https://github.com/user-attachments/assets/87300eec-d60b-42ad-bf18-a31300fc0f20)
+![Group 14](https://github.com/user-attachments/assets/f97cbccd-2919-4487-a67b-e982bbc41243)
 
 # Java File Transfer CLI 
 
@@ -13,8 +13,6 @@ Ever wanted to transfer files between devices but always find it hard to get a U
 
 ## Showcase
 Usually I would show off my proudly crafted UI but since this is a simple CLI I will just show off what it looks like from the perspective of the Client and the Host.
-
-
 
 ## Room for Improvement
 This project actually was first a JavaFX project that included a complete UI for navigation but that idea was scrapped when I realised the project was probably better suited for a CLI. Below are some other ideas I had but did not implement:
