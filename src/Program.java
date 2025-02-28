@@ -43,7 +43,8 @@ public class Program {
 
             Map<String, Consumer<String>> hostCommandFunctionMap = Map.of(
                 "boot", x -> host.bootClient(),
-                "exit", x -> System.out.println("")
+                "exit", x -> System.out.println(""),
+                "help", x -> System.out.println("Commands: boot (remove client connection (does not stop reconnect!)), exit (end program).")
             );
 
             try {
@@ -73,7 +74,8 @@ public class Program {
         Map<String, Consumer<String>> clientCommandFunctionMap = Map.of(
             "cd", client::sendObject,
             "download", client::requestFileDownload,
-            "exit", x -> System.out.println("")
+            "exit", x -> System.out.println(""),
+            "help", x -> System.out.println("Commands: cd (enter folder), download (download file or all direct children files of folder), exit (end program).")
         );
 
         handleUserInputs(clientCommandFunctionMap);
